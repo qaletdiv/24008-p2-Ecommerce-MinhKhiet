@@ -1,0 +1,122 @@
+/* FeaturedProduct Component Styles */
+.featured-container {
+  margin-top: 56px;
+}
+
+.featured-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.featured-title {
+  font-size: 30px;
+  font-weight: 500;
+}
+
+.featured-underline {
+  width: 112px;
+  height: 2px;
+  background-color: #ea580c;
+  margin-top: 8px;
+}
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  margin-top: 48px;
+  padding: 0 16px;
+}
+
+@media (min-width: 640px) {
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .featured-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 56px;
+    padding: 0 56px;
+  }
+}
+
+.featured-item {
+  position: relative;
+  cursor: pointer;
+}
+
+.featured-image {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+.featured-item:hover .featured-image {
+  filter: brightness(0.75);
+}
+
+.featured-content {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.3s ease;
+}
+
+.featured-item:hover .featured-content {
+  transform: translateY(-16px);
+}
+
+.featured-content-title {
+  font-weight: 500;
+  font-size: 20px;
+}
+
+@media (min-width: 1024px) {
+  .featured-content-title {
+    font-size: 24px;
+  }
+}
+
+.featured-content-description {
+  font-size: 14px;
+  line-height: 20px;
+  max-width: 240px;
+}
+
+@media (min-width: 1024px) {
+  .featured-content-description {
+    font-size: 16px;
+  }
+}
+
+.featured-buy-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ea580c;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.featured-buy-button:hover {
+  background-color: #dc2626;
+}
+
+.featured-redirect-icon {
+  height: 12px;
+  width: 12px;
+}

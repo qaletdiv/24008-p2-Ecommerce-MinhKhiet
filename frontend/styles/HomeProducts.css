@@ -1,0 +1,56 @@
+/* HomeProducts Component Styles */
+.home-products-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 56px;
+}
+
+.home-products-title {
+  font-size: 24px;
+  font-weight: 500;
+  text-align: left;
+  width: 100%;
+}
+
+.home-products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  align-items: center;
+  gap: 24px;
+  margin-top: 24px;
+  padding-bottom: 56px;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .home-products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .home-products-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.home-products-see-more {
+  padding: 10px 48px;
+  border: 1px solid rgba(107, 114, 128, 0.7);
+  border-radius: 6px;
+  color: rgba(107, 114, 128, 0.7);
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.home-products-see-more:hover {
+  background-color: rgba(248, 250, 252, 0.9);
+}

@@ -1,0 +1,59 @@
+/* Seller Sidebar Component Styles */
+.seller-sidebar-container {
+  width: 64px;
+  border-right: 1px solid #d1d5db;
+  min-height: 100vh;
+  font-size: 16px;
+  border-color: #d1d5db;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .seller-sidebar-container {
+    width: 256px;
+  }
+}
+
+.seller-sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.3s ease;
+  border-right: 4px solid white;
+}
+
+@media (min-width: 768px) {
+  .seller-sidebar-item {
+    border-right-width: 6px;
+  }
+}
+
+.seller-sidebar-item:hover {
+  background-color: rgba(243, 244, 246, 0.9);
+}
+
+.seller-sidebar-item.active {
+  border-right-color: rgba(234, 88, 12, 0.9);
+  background-color: rgba(234, 88, 12, 0.1);
+}
+
+.seller-sidebar-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.seller-sidebar-text {
+  display: none;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .seller-sidebar-text {
+    display: block;
+  }
+}
