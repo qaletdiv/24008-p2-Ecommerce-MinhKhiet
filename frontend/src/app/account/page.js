@@ -17,11 +17,20 @@ const AccountPage = () => {
 
   const [activeTab, setActiveTab] = useState('profile');
   const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [memberSinceDate, setMemberSinceDate] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    totalPages: 1,
+    totalItems: 0,
+    currentPage: 1,
+    itemsPerPage: 3
+  });
+  const ordersPerPage = 3;
   const [editFormData, setEditFormData] = useState({
     name: '',
     email: '',
@@ -49,6 +58,29 @@ const AccountPage = () => {
 
     loadUserOrders();
   }, [user, router]);
+
+  const calculatePagination = (totalOrders) => {
+    const totalPages = Math.ceil(totalOrders / ordersPerPage);
+    return {
+      totalPages,
+      totalItems: totalOrders,
+      currentPage,
+      itemsPerPage: ordersPerPage
+    };
+  };
+
+  const getCurrentPageOrders = (allOrdersList) => {
+    const startIndex = (currentPage - 1) * ordersPerPage;
+    const endIndex = startIndex + ordersPerPage;
+    return allOrdersList.slice(startIndex, endIndex);
+  };
+
+  useEffect(() => {
+    if (allOrders.length > 0) {
+      setPagination(calculatePagination(allOrders.length));
+      setOrders(getCurrentPageOrders(allOrders));
+    }
+  }, [currentPage, allOrders]);
 
   const loadUserOrders = async () => {
     if (!user) return;
@@ -205,9 +237,30 @@ const AccountPage = () => {
             trackingNumber: 'TRK-003456789'
           }
         ];
-        setOrders(mockOrders);
+        setAllOrders(mockOrders);
+        setPagination(calculatePagination(mockOrders.length));
+        setOrders(getCurrentPageOrders(mockOrders));
       } else {
-        setOrders(userOrders);
+        const mappedOrders = userOrders.map(order => {
+          const calculatedTotal = order.items?.reduce((sum, item) => {
+            return sum + ((item.price || 0) * (item.quantity || 0));
+          }, 0) || 0;
+          
+          return {
+            ...order,
+            date: order.date || order.orderDate,
+            total: order.totalAmount || order.total || calculatedTotal,
+            totalAmount: order.totalAmount || order.total || calculatedTotal,
+            items: order.items?.map(item => ({
+              ...item,
+              name: item.name || item.productName,
+              image: item.image || '/default-product.svg'
+            })) || []
+          };
+        });
+        setAllOrders(mappedOrders);
+        setPagination(calculatePagination(mappedOrders.length));
+        setOrders(getCurrentPageOrders(mappedOrders));
       }
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -484,7 +537,7 @@ const AccountPage = () => {
                 <div className="content-card">
                   <div className="card-header">
                     <h2>Order History</h2>
-                    <span className="orders-count">{orders.length} orders</span>
+                    <span className="orders-count">{allOrders.length} orders</span>
                   </div>
 
                   <div className="orders-content">

@@ -26,12 +26,47 @@ const AllProductsPage = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const limit = 12;
+  const [allProducts, setAllProducts] = useState([]); 
+  
+  const getProductsPerPage = (pageNumber) => {
+    if (pageNumber === 1) return 4;
+    if (pageNumber === 2) return 3;
+    return 0; 
+  };
+  
+  const calculateCustomPagination = (totalProducts) => {
+    let totalPages = 0;
+    if (totalProducts > 0) {
+      totalPages = 1;
+    }
+    if (totalProducts > 4) {
+      totalPages = 2;
+    }
+    const displayedProducts = Math.min(totalProducts, 7);
+    
+    return {
+      totalPages,
+      totalItems: displayedProducts, 
+      availableItems: totalProducts,
+      currentPage,
+      itemsPerPage: getProductsPerPage(currentPage),
+      maxDisplayItems: 7 
+    };
+  };
+  
+  const getCurrentPageProducts = () => {
+    if (currentPage === 1) {
+      return allProducts.slice(0, 4);
+    } else if (currentPage === 2) {
+      return allProducts.slice(4, 7);
+    }
+    return [];
+  };
 
   const loadProducts = async () => {
     const params = {
-      page: currentPage,
-      limit,
+      limit: 100,
+      page: 1, 
       ...filters
     };
     
@@ -41,9 +76,25 @@ const AllProductsPage = () => {
       }
     });
 
-    const response = await fetchProducts(params);
-    if (response.pagination) {
-      setPagination(response.pagination);
+    console.log('Loading products with params:', params);
+    try {
+      const response = await fetchProducts(params);
+      console.log('Fetch products response:', response);
+      
+      if (response && response.data) {
+        console.log('Products loaded:', response.data.length, 'products');
+        setAllProducts(response.data);
+        const customPagination = calculateCustomPagination(response.data.length);
+        setPagination(customPagination);
+      } else {
+        console.log('No products data in response:', response);
+        setAllProducts([]);
+        setPagination({});
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      setAllProducts([]);
+      setPagination({});
     }
   };
 
@@ -58,11 +109,19 @@ const AllProductsPage = () => {
   };
   useEffect(() => {
     fetchCategories();
+    loadProducts();
   }, []);
 
   useEffect(() => {
     loadProducts();
-  }, [currentPage, filters]);
+  }, [filters]); 
+  
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      const customPagination = calculateCustomPagination(allProducts.length);
+      setPagination(customPagination);
+    }
+  }, [currentPage, allProducts]);
 
   const containerStyle = {
     minHeight: '100vh',
@@ -170,7 +229,7 @@ const AllProductsPage = () => {
     ...pageButtonStyle,
     backgroundColor: '#ea580c',
     color: 'white',
-    borderColor: '#ea580c'
+    border: '1px solid #ea580c'
   };
 
   const noProductsStyle = {
@@ -193,14 +252,20 @@ const AllProductsPage = () => {
       <Navbar />
       <main style={mainStyle}>
         <div style={headerStyle}>
-          <h1 style={titleStyle}>All Products</h1>
+          <h1 style={titleStyle}>
+            All Products 
+            {allProducts.length > 0 && (
+              <span style={{ fontSize: '18px', fontWeight: '400', color: '#6b7280' }}>
+              </span>
+            )}
+          </h1>
           
           {error && (
             <div style={errorStyle}>
               ⚠️ {error}
             </div>
           )}
-
+        
           <div style={filtersStyle}>
             <form onSubmit={handleSearch} style={searchFormStyle}>
               <div style={filterGroupStyle}>
@@ -285,10 +350,10 @@ const AllProductsPage = () => {
 
         {loadingStates.products ? (
           <Loading />
-        ) : products.length > 0 ? (
+        ) : allProducts.length > 0 ? (
           <>
             <div style={productsGridStyle}>
-              {products.map((product) => (
+              {getCurrentPageProducts().map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>
@@ -320,11 +385,6 @@ const AllProductsPage = () => {
                 >
                   Next
                 </button>
-                
-                <span style={{ marginLeft: '20px', color: '#6b7280' }}>
-                  Page {pagination.currentPage} of {pagination.totalPages} 
-                  ({pagination.totalItems} total items)
-                </span>
               </div>
             )}
           </>

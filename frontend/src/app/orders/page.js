@@ -15,9 +15,18 @@ const OrdersPage = () => {
   } = useAppContext();
 
   const [orders, setOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    totalPages: 1,
+    totalItems: 0,
+    currentPage: 1,
+    itemsPerPage: 5
+  });
+  const ordersPerPage = 5;
 
   useEffect(() => {
     if (!user) {
@@ -27,6 +36,29 @@ const OrdersPage = () => {
 
     loadUserOrders();
   }, [user, router]);
+
+  useEffect(() => {
+    if (allOrders.length > 0) {
+      setPagination(calculatePagination(allOrders.length));
+      setOrders(getCurrentPageOrders(allOrders));
+    }
+  }, [currentPage, allOrders]);
+
+  const calculatePagination = (totalOrders) => {
+    const totalPages = Math.ceil(totalOrders / ordersPerPage);
+    return {
+      totalPages,
+      totalItems: totalOrders,
+      currentPage,
+      itemsPerPage: ordersPerPage
+    };
+  };
+
+  const getCurrentPageOrders = (allOrders) => {
+    const startIndex = (currentPage - 1) * ordersPerPage;
+    const endIndex = startIndex + ordersPerPage;
+    return allOrders.slice(startIndex, endIndex);
+  };
 
   const loadUserOrders = async () => {
     if (!user) return;
@@ -42,6 +74,7 @@ const OrdersPage = () => {
             date: '2024-01-15',
             status: 'delivered',
             total: 329.99,
+            totalAmount: 329.99,
             subtotal: 329.99,
             shipping: 0,
             tax: 0,
@@ -74,6 +107,7 @@ const OrdersPage = () => {
             date: '2024-01-10',
             status: 'shipped',
             total: 1199.99,
+            totalAmount: 1199.99,
             subtotal: 1199.99,
             shipping: 0,
             tax: 0,
@@ -106,6 +140,7 @@ const OrdersPage = () => {
             date: '2024-01-05',
             status: 'processing',
             total: 1199.98,
+            totalAmount: 1199.98,
             subtotal: 1199.98,
             shipping: 0,
             tax: 0,
@@ -145,6 +180,7 @@ const OrdersPage = () => {
             date: '2024-01-01',
             status: 'delivered',
             total: 689.98,
+            totalAmount: 689.98,
             subtotal: 689.98,
             shipping: 0,
             tax: 0,
@@ -179,19 +215,30 @@ const OrdersPage = () => {
             trackingNumber: 'TRK-003456789'
           }
         ];
-        setOrders(mockOrders);
+        setAllOrders(mockOrders);
+        setPagination(calculatePagination(mockOrders.length));
+        setOrders(getCurrentPageOrders(mockOrders));
       } else {
-        const mappedOrders = userOrders.map(order => ({
-          ...order,
-          date: order.date || order.orderDate,
-          total: order.total || order.totalAmount,
-          items: order.items?.map(item => ({
-            ...item,
-            name: item.name || item.productName,
-            image: item.image || '/default-product.svg'
-          })) || []
-        }));
-        setOrders(mappedOrders);
+        const mappedOrders = userOrders.map(order => {
+          const calculatedTotal = order.items?.reduce((sum, item) => {
+            return sum + ((item.price || 0) * (item.quantity || 0));
+          }, 0) || 0;
+          
+          return {
+            ...order,
+            date: order.date || order.orderDate,
+            total: order.totalAmount || order.total || calculatedTotal,
+            totalAmount: order.totalAmount || order.total || calculatedTotal,
+            items: order.items?.map(item => ({
+              ...item,
+              name: item.name || item.productName,
+              image: item.image || '/default-product.svg'
+            })) || []
+          };
+        });
+        setAllOrders(mappedOrders);
+        setPagination(calculatePagination(mappedOrders.length));
+        setOrders(getCurrentPageOrders(mappedOrders));
       }
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -276,7 +323,7 @@ const OrdersPage = () => {
               <div className="content-card">
                 <div className="card-header">
                   <h2>Order History</h2>
-                  <span className="orders-count">{orders.length} orders</span>
+                  <span className="orders-count">{allOrders.length} orders</span>
                 </div>
 
                 <div className="orders-content">
@@ -348,7 +395,7 @@ const OrdersPage = () => {
 
                           <div className="order-footer">
                             <div className="order-total">
-                              <strong>Total: {currency}{(order.total || 0).toFixed(2)}</strong>
+                              <strong>Total: {currency}{((order.total || order.totalAmount) || 0).toFixed(2)}</strong>
                             </div>
                             <div className="order-actions">
                               <button 
@@ -369,6 +416,41 @@ const OrdersPage = () => {
                           </div>
                         </div>
                       ))}
+                      
+                      {pagination.totalPages > 1 && (
+                        <div className="pagination-container">
+                          <button
+                            className="pagination-btn"
+                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                          >
+                            Previous
+                          </button>
+                          
+                          {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                              key={page}
+                              className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                              onClick={() => setCurrentPage(page)}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                          
+                          <button
+                            className="pagination-btn"
+                            onClick={() => setCurrentPage(Math.min(pagination.totalPages, currentPage + 1))}
+                            disabled={currentPage === pagination.totalPages}
+                          >
+                            Next
+                          </button>
+                          
+                          <span className="pagination-info">
+                            Page {pagination.currentPage} of {pagination.totalPages} 
+                            ({pagination.totalItems} total orders)
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
