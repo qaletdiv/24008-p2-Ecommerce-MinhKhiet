@@ -22,11 +22,25 @@ const apiService = {
       const data = await response.json();
       
       if (!response.ok) {
+        if (endpoint === '/users/login' && (response.status === 401 || response.status === 400)) {
+          return {
+            success: false,
+            error: data.error || 'Authentication failed',
+            message: data.message || 'Invalid credentials'
+          };
+        }
         throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
       
       return data;
     } catch (error) {
+      if (endpoint === '/users/login' && error.name === 'TypeError') {
+        return {
+          success: false,
+          error: 'Network error',
+          message: 'Unable to connect to server. Please check your connection.'
+        };
+      }
       console.error(`API call failed for ${endpoint}:`, error);
       throw error;
     }
@@ -437,7 +451,7 @@ export const AppContextProvider = ({ children }) => {
         localStorage.removeItem('cart');
       }
     }
-    fetchProducts();
+    fetchProducts({ limit: 100 });
     fetchCategories();
   }, [fetchProducts, fetchCategories]);
 

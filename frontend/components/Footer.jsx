@@ -8,12 +8,21 @@ const Footer = () => {
     <footer className="footer-container">
       <div className="footer-main">
         <div className="footer-logo-section">
-          <Image className="footer-logo" src={assets.logo} alt="logo" width={120} height={40} />
+          <Image
+            className="footer-logo"
+            src={assets.logo}
+            alt="logo"
+            width={120}
+            height={40}
+          />
           <p className="footer-description">
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text
-            ever since the 1500s, when an unknown printer took a galley of type
-            and scrambled it to make a type specimen book.
+            Welcome to QuickCart, your premier destination for the
+            latest and most reliable electronics. Since our founding, we've been
+            committed to providing cutting-edge technology from smartphones and
+            laptops to smart home devices and audio gear. We carefully select
+            every product to ensure it meets our high standards for innovation,
+            quality, and value, helping you stay connected and empowered in a
+            digital world.
           </p>
         </div>
 
@@ -22,16 +31,24 @@ const Footer = () => {
             <h2 className="footer-section-title">Company</h2>
             <ul className="footer-nav-list">
               <li>
-                <a className="footer-nav-link" href="#">Home</a>
+                <a className="footer-nav-link" href="#">
+                  Home
+                </a>
               </li>
               <li>
-                <a className="footer-nav-link" href="#">About us</a>
+                <a className="footer-nav-link" href="#">
+                  About us
+                </a>
               </li>
               <li>
-                <a className="footer-nav-link" href="#">Contact us</a>
+                <a className="footer-nav-link" href="#">
+                  Contact us
+                </a>
               </li>
               <li>
-                <a className="footer-nav-link" href="#">Privacy policy</a>
+                <a className="footer-nav-link" href="#">
+                  Privacy policy
+                </a>
               </li>
             </ul>
           </div>

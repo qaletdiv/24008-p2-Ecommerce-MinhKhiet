@@ -20,7 +20,7 @@ router.get('/', validatePagination, (req, res) => {
       sortBy, 
       sortOrder = 'asc',
       page = 1, 
-      limit = 10 
+      limit = 4 
     } = req.query;
 
     let filteredProducts = [...products];

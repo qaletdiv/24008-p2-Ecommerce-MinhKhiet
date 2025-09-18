@@ -18,8 +18,19 @@ const ProductDetailPage = () => {
     user, 
     loading,
     currency,
-    router 
+    router,
+    apiService 
   } = useAppContext();
+
+  const navigateToHome = async () => {
+    try {
+      await fetchProducts({ limit: 100 }); 
+      router.push('/');
+    } catch (error) {
+      console.error('Error reloading products:', error);
+      router.push('/'); 
+    }
+  };
 
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
@@ -37,11 +48,16 @@ const ProductDetailPage = () => {
         if (productData) {
           setProduct(productData);
   
-          const allProductsResponse = await fetchProducts({ category: productData.category });
-          const related = allProductsResponse.data
-            ?.filter(p => p.id !== parseInt(id))
-            ?.slice(0, 4) || [];
-          setRelatedProducts(related);
+          try {
+            const relatedResponse = await apiService.getProducts({ category: productData.category, limit: 20 });
+            const related = relatedResponse.data
+              ?.filter(p => p.id !== parseInt(id))
+              ?.slice(0, 4) || [];
+            setRelatedProducts(related);
+          } catch (error) {
+            console.error('Error loading related products:', error);
+            setRelatedProducts([]);
+          }
         } else {
           setError('Product not found');
         }
@@ -130,7 +146,7 @@ const ProductDetailPage = () => {
         <div className="error-container">
           <h2>Error</h2>
           <p>{error}</p>
-          <button onClick={() => router.push('/')} className="back-home-btn">
+          <button onClick={navigateToHome} className="back-home-btn">
             Back to Home
           </button>
         </div>
@@ -146,7 +162,7 @@ const ProductDetailPage = () => {
         <div className="error-container">
           <h2>Product Not Found</h2>
           <p>The product you're looking for doesn't exist.</p>
-          <button onClick={() => router.push('/')} className="back-home-btn">
+          <button onClick={navigateToHome} className="back-home-btn">
             Back to Home
           </button>
         </div>
@@ -161,7 +177,7 @@ const ProductDetailPage = () => {
       
       <main className="product-detail-main">
         <div className="breadcrumb">
-          <span onClick={() => router.push('/')} className="breadcrumb-link">Home</span>
+          <span onClick={navigateToHome} className="breadcrumb-link">Home</span>
           <span className="breadcrumb-separator">/</span>
           <span className="breadcrumb-link">{product.category}</span>
           <span className="breadcrumb-separator">/</span>

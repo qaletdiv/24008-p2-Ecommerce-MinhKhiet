@@ -8,12 +8,11 @@ import Loading from '../../../components/Loading';
 
 const AllProductsPage = () => {
   const { 
-    products, 
     categories, 
-    fetchProducts, 
     fetchCategories, 
     loadingStates, 
-    error 
+    error,
+    apiService 
   } = useAppContext();
 
   const [filters, setFilters] = useState({
@@ -26,47 +25,11 @@ const AllProductsPage = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const [allProducts, setAllProducts] = useState([]); 
+  const [displayProducts, setDisplayProducts] = useState([]); 
   
-  const getProductsPerPage = (pageNumber) => {
-    if (pageNumber === 1) return 4;
-    if (pageNumber === 2) return 3;
-    return 0; 
-  };
-  
-  const calculateCustomPagination = (totalProducts) => {
-    let totalPages = 0;
-    if (totalProducts > 0) {
-      totalPages = 1;
-    }
-    if (totalProducts > 4) {
-      totalPages = 2;
-    }
-    const displayedProducts = Math.min(totalProducts, 7);
-    
-    return {
-      totalPages,
-      totalItems: displayedProducts, 
-      availableItems: totalProducts,
-      currentPage,
-      itemsPerPage: getProductsPerPage(currentPage),
-      maxDisplayItems: 7 
-    };
-  };
-  
-  const getCurrentPageProducts = () => {
-    if (currentPage === 1) {
-      return allProducts.slice(0, 4);
-    } else if (currentPage === 2) {
-      return allProducts.slice(4, 7);
-    }
-    return [];
-  };
-
   const loadProducts = async () => {
     const params = {
-      limit: 100,
-      page: 1, 
+      page: currentPage,
       ...filters
     };
     
@@ -78,29 +41,29 @@ const AllProductsPage = () => {
 
     console.log('Loading products with params:', params);
     try {
-      const response = await fetchProducts(params);
+      const response = await apiService.getProducts(params);
       console.log('Fetch products response:', response);
       
       if (response && response.data) {
         console.log('Products loaded:', response.data.length, 'products');
-        setAllProducts(response.data);
-        const customPagination = calculateCustomPagination(response.data.length);
-        setPagination(customPagination);
+        setDisplayProducts(response.data);
+        if (response.pagination) {
+          setPagination(response.pagination);
+        }
       } else {
         console.log('No products data in response:', response);
-        setAllProducts([]);
+        setDisplayProducts([]);
         setPagination({});
       }
     } catch (error) {
       console.error('Error loading products:', error);
-      setAllProducts([]);
+      setDisplayProducts([]);
       setPagination({});
     }
   };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    setCurrentPage(1); 
   };
 
   const handleSearch = (e) => {
@@ -113,15 +76,13 @@ const AllProductsPage = () => {
   }, []);
 
   useEffect(() => {
+    setCurrentPage(1); 
     loadProducts();
-  }, [filters]); 
+  }, [filters]);
   
   useEffect(() => {
-    if (allProducts.length > 0) {
-      const customPagination = calculateCustomPagination(allProducts.length);
-      setPagination(customPagination);
-    }
-  }, [currentPage, allProducts]);
+    loadProducts(); 
+  }, [currentPage]);
 
   const containerStyle = {
     minHeight: '100vh',
@@ -254,7 +215,7 @@ const AllProductsPage = () => {
         <div style={headerStyle}>
           <h1 style={titleStyle}>
             All Products 
-            {allProducts.length > 0 && (
+            {pagination.totalItems > 0 && (
               <span style={{ fontSize: '18px', fontWeight: '400', color: '#6b7280' }}>
               </span>
             )}
@@ -350,10 +311,10 @@ const AllProductsPage = () => {
 
         {loadingStates.products ? (
           <Loading />
-        ) : allProducts.length > 0 ? (
+        ) : displayProducts.length > 0 ? (
           <>
             <div style={productsGridStyle}>
-              {getCurrentPageProducts().map((product) => (
+              {displayProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

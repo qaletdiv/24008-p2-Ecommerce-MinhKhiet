@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image';
 import { useAppContext } from '../context/AppContext';
 import '../styles/ProductCard.css';
@@ -6,13 +6,58 @@ import { assets } from '../assets/assets';
 
 const ProductCard = ({ product }) => {
 
-    const { currency, router } = useAppContext()
+    const { currency, router, addToCart } = useAppContext()
+    const [isAdding, setIsAdding] = useState(false);
+    const [showNotification, setShowNotification] = useState(false);
+
+    const handleAddToCart = async (e) => {
+        e.stopPropagation();
+        setIsAdding(true);
+        
+        try {
+            addToCart(product, 1);
+            console.log(`Added ${product.name} to cart`);
+            
+            setShowNotification(true);
+            
+            setTimeout(() => {
+                setShowNotification(false);
+                setIsAdding(false);
+            }, 2000);
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            setIsAdding(false);
+        }
+    };
 
     return (
         <div
             onClick={() => { router.push('/product/' + product.id); scrollTo(0, 0) }}
             className="product-card"
+            style={{ position: 'relative' }}
         >
+            {/* Success Notification */}
+            {showNotification && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: '10px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        backgroundColor: '#10b981',
+                        color: 'white',
+                        padding: '8px 16px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        zIndex: 1000,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                        animation: 'fadeInOut 2s ease-in-out'
+                    }}
+                >
+                    ✓ Added to cart!
+                </div>
+            )}
             <div className="product-card-image-container">
                 <Image
                     src={product.image[0]}
@@ -56,8 +101,16 @@ const ProductCard = ({ product }) => {
 
             <div className="product-card-footer">
                 <p className="product-card-price">{currency}{product.offerPrice}</p>
-                <button className="product-card-buy-btn">
-                    Buy now
+                <button 
+                    className="product-card-buy-btn"
+                    onClick={handleAddToCart}
+                    disabled={isAdding}
+                    style={{ 
+                        opacity: isAdding ? 0.7 : 1,
+                        cursor: isAdding ? 'not-allowed' : 'pointer'
+                    }}
+                >
+                    {isAdding ? 'Adding...' : 'Add to cart'}
                 </button>
             </div>
         </div>

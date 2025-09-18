@@ -1,5 +1,5 @@
 "use client"
-import React from "react";
+import React, { useEffect } from "react";
 import Navbar from "../../components/Navbar";
 import HeaderSlider from "../../components/HeaderSlider";
 import Banner from "../../components/Banner";
@@ -11,7 +11,11 @@ import Loading from "../../components/Loading";
 import { useAppContext } from "../../context/AppContext";
 
 export default function Home() {
-  const { loading, error, loadingStates } = useAppContext();
+  const { loading, error, loadingStates, fetchProducts } = useAppContext();
+
+  useEffect(() => {
+    fetchProducts({ limit: 100 }); 
+  }, []); 
 
   if (loadingStates.products) {
     return (
