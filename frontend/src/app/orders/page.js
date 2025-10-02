@@ -66,7 +66,74 @@ const OrdersPage = () => {
     setIsLoading(true);
     try {
       const userOrders = await fetchUserOrders(user.id);
-      if (!userOrders || userOrders.length === 0) {
+      console.log('🔄 Real orders from backend:', userOrders);
+      
+      const productMap = {
+        1: {
+          name: 'Apple AirPods Pro 2nd Gen',
+          image: 'http://localhost:4000/assets/apple_earphone_image.png'
+        },
+        2: {
+          name: 'ASUS Gaming Laptop',
+          image: 'http://localhost:4000/assets/asus_laptop_image.png'
+        },
+        3: {
+          name: 'Bose QuietComfort 45 Headphones',
+          image: 'http://localhost:4000/assets/bose_headphone_image.png'
+        },
+        4: {
+          name: 'Samsung Galaxy S23',
+          image: 'http://localhost:4000/assets/samsung_s23phone_image.png'
+        },
+        5: {
+          name: 'Garmin Venu 2 Smartwatch',
+          image: 'http://localhost:4000/assets/venu_watch_image.png'
+        },
+        6: {
+          name: 'PlayStation 5 Controller',
+          image: 'http://localhost:4000/assets/md_controller_image.png'
+        }
+      };
+      
+      if (userOrders && userOrders.length > 0) {
+        console.log('✅ Processing real orders in My Orders page...');
+        
+        const mappedOrders = userOrders.map(order => {
+          const calculatedTotal = order.items?.reduce((sum, item) => {
+            return sum + ((item.price || 0) * (item.quantity || 0));
+          }, 0) || 0;
+          
+          return {
+            ...order,
+            date: order.date || order.orderDate,
+            total: order.totalAmount || order.total || calculatedTotal,
+            totalAmount: order.totalAmount || order.total || calculatedTotal,
+            items: order.items?.map(item => {
+              const productInfo = productMap[item.productId];
+              return {
+                ...item,
+                id: item.productId,
+                name: productInfo?.name || `Product ${item.productId}`,
+                image: productInfo?.image || 'http://localhost:4000/assets/bose_headphone_image.png'
+              };
+            }) || []
+          };
+        });
+        
+        console.log('✅ My Orders page - mapped orders:', mappedOrders.map(order => ({
+          orderNumber: order.orderNumber,
+          items: order.items.map(item => ({ 
+            name: item.name, 
+            image: item.image
+          }))
+        })));
+        
+        setAllOrders(mappedOrders);
+        setPagination(calculatePagination(mappedOrders.length));
+        setOrders(getCurrentPageOrders(mappedOrders));
+      } else {
+        console.log('📝 No real orders found, using mock orders for My Orders demonstration');
+        
         const mockOrders = [
           {
             id: 1,
@@ -84,7 +151,7 @@ const OrdersPage = () => {
                 name: 'Bose QuietComfort 45 Headphones',
                 price: 329.99,
                 quantity: 1,
-                image: assets.bose_headphone_image
+                image: 'http://localhost:4000/assets/bose_headphone_image.png'
               }
             ],
             shippingInfo: {
@@ -100,145 +167,11 @@ const OrdersPage = () => {
             },
             paymentMethod: 'Credit Card',
             trackingNumber: 'TRK-001234567'
-          },
-          {
-            id: 2,
-            orderNumber: 'ORD-000002',
-            date: '2024-01-10',
-            status: 'shipped',
-            total: 1199.99,
-            totalAmount: 1199.99,
-            subtotal: 1199.99,
-            shipping: 0,
-            tax: 0,
-            items: [
-              {
-                id: 2,
-                name: 'ASUS Gaming Laptop',
-                price: 1199.99,
-                quantity: 1,
-                image: assets.asus_laptop_image
-              }
-            ],
-            shippingInfo: {
-              firstName: user?.name?.split(' ')[0] || 'John',
-              lastName: user?.name?.split(' ')[1] || 'Doe',
-              email: user?.email || 'john.doe@example.com',
-              phone: user?.phone || '+84 987 654 321',
-              address: '456 Le Loi Boulevard',
-              city: 'Da Nang',
-              state: 'Da Nang',
-              zipCode: '550000',
-              country: 'Vietnam'
-            },
-            paymentMethod: 'PayPal',
-            trackingNumber: 'TRK-002345678'
-          },
-          {
-            id: 3,
-            orderNumber: 'ORD-000003',
-            date: '2024-01-05',
-            status: 'processing',
-            total: 1199.98,
-            totalAmount: 1199.98,
-            subtotal: 1199.98,
-            shipping: 0,
-            tax: 0,
-            items: [
-              {
-                id: 3,
-                name: 'Apple AirPods Pro 2nd Gen',
-                price: 399.99,
-                quantity: 1,
-                image: assets.apple_earphone_image
-              },
-              {
-                id: 4,
-                name: 'Samsung Galaxy S23',
-                price: 799.99,
-                quantity: 1,
-                image: assets.samsung_s23phone_image
-              }
-            ],
-            shippingInfo: {
-              firstName: user?.name?.split(' ')[0] || 'John',
-              lastName: user?.name?.split(' ')[1] || 'Doe',
-              email: user?.email || 'john.doe@example.com',
-              phone: user?.phone || '+84 555 123 456',
-              address: '789 Tran Hung Dao Street',
-              city: 'Hanoi',
-              state: 'Hanoi',
-              zipCode: '100000',
-              country: 'Vietnam'
-            },
-            paymentMethod: 'Cash on Delivery',
-            trackingNumber: null
-          },
-          {
-            id: 4,
-            orderNumber: 'ORD-000004',
-            date: '2024-01-01',
-            status: 'delivered',
-            total: 689.98,
-            totalAmount: 689.98,
-            subtotal: 689.98,
-            shipping: 0,
-            tax: 0,
-            items: [
-              {
-                id: 5,
-                name: 'Garmin Venu 2 Smartwatch',
-                price: 349.99,
-                quantity: 1,
-                image: assets.venu_watch_image
-              },
-              {
-                id: 6,
-                name: 'PlayStation 5 Controller',
-                price: 339.99,
-                quantity: 1,
-                image: assets.md_controller_image
-              }
-            ],
-            shippingInfo: {
-              firstName: user?.name?.split(' ')[0] || 'John',
-              lastName: user?.name?.split(' ')[1] || 'Doe',
-              email: user?.email || 'john.doe@example.com',
-              phone: user?.phone || '+84 444 555 666',
-              address: '456 Dong Khoi Street',
-              city: 'Ho Chi Minh City',
-              state: 'Ho Chi Minh',
-              zipCode: '700000',
-              country: 'Vietnam'
-            },
-            paymentMethod: 'Credit Card',
-            trackingNumber: 'TRK-003456789'
           }
         ];
         setAllOrders(mockOrders);
         setPagination(calculatePagination(mockOrders.length));
         setOrders(getCurrentPageOrders(mockOrders));
-      } else {
-        const mappedOrders = userOrders.map(order => {
-          const calculatedTotal = order.items?.reduce((sum, item) => {
-            return sum + ((item.price || 0) * (item.quantity || 0));
-          }, 0) || 0;
-          
-          return {
-            ...order,
-            date: order.date || order.orderDate,
-            total: order.totalAmount || order.total || calculatedTotal,
-            totalAmount: order.totalAmount || order.total || calculatedTotal,
-            items: order.items?.map(item => ({
-              ...item,
-              name: item.name || item.productName,
-              image: item.image || '/default-product.svg'
-            })) || []
-          };
-        });
-        setAllOrders(mappedOrders);
-        setPagination(calculatePagination(mappedOrders.length));
-        setOrders(getCurrentPageOrders(mappedOrders));
       }
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -372,8 +305,24 @@ const OrdersPage = () => {
                                     src={item.image} 
                                     alt={item.name} 
                                     className="item-image"
+                                    onLoad={() => {
+                                      console.log('✅ My Orders - Image loaded:', item.name);
+                                    }}
                                     onError={(e) => {
-                                      e.target.src = '/default-product.svg';
+                                      console.log('❌ My Orders - Image failed:', item.name, item.image);           
+                                      const canvas = document.createElement('canvas');
+                                      canvas.width = 60;
+                                      canvas.height = 60;
+                                      const ctx = canvas.getContext('2d');
+                                      ctx.fillStyle = '#ea580c';
+                                      ctx.fillRect(0, 0, 60, 60);
+                                      ctx.fillStyle = 'white';
+                                      ctx.font = 'bold 24px Arial';
+                                      ctx.textAlign = 'center';
+                                      ctx.textBaseline = 'middle';
+                                      const displayName = item.name || 'Unknown';
+                                      ctx.fillText(displayName.charAt(0).toUpperCase(), 30, 30);
+                                      e.target.src = canvas.toDataURL();
                                     }}
                                     title={item.name}
                                   />
@@ -531,8 +480,24 @@ const OrdersPage = () => {
                         src={item.image} 
                         alt={item.name} 
                         className="modal-item-image"
+                        onLoad={() => {
+                          console.log('✅ My Orders Modal - Image loaded:', item.name);
+                        }}
                         onError={(e) => {
-                          e.target.src = '/default-product.svg';
+                          console.log('❌ My Orders Modal - Image failed:', item.name);
+                          const canvas = document.createElement('canvas');
+                          canvas.width = 60;
+                          canvas.height = 60;
+                          const ctx = canvas.getContext('2d');
+                          ctx.fillStyle = '#ea580c';
+                          ctx.fillRect(0, 0, 60, 60);
+                          ctx.fillStyle = 'white';
+                          ctx.font = 'bold 24px Arial';
+                          ctx.textAlign = 'center';
+                          ctx.textBaseline = 'middle';
+                          const displayName = item.name || 'Unknown';
+                          ctx.fillText(displayName.charAt(0).toUpperCase(), 30, 30);
+                          e.target.src = canvas.toDataURL();
                         }}
                       />
                       <div className="modal-item-details">

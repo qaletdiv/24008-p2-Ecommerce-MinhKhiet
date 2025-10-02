@@ -431,24 +431,33 @@ export const AppContextProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        setIsSeller(userData.role === 'seller' || userData.role === 'admin');
-      } catch (error) {
-        console.error('Error parsing saved user data:', error);
-        localStorage.removeItem('user');
+    if (process.env.NODE_ENV === 'development') {
+      localStorage.removeItem('user');
+      localStorage.removeItem('cart'); 
+      setUser(null);
+      setIsSeller(false);
+      setCart([]);
+    } else {
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
+          setIsSeller(userData.role === 'seller' || userData.role === 'admin');
+        } catch (error) {
+          console.error('Error parsing saved user data:', error);
+          localStorage.removeItem('user');
+        }
       }
-    }
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error parsing saved cart data:', error);
-        localStorage.removeItem('cart');
+      
+      const savedCart = localStorage.getItem('cart');
+      if (savedCart) {
+        try {
+          setCart(JSON.parse(savedCart));
+        } catch (error) {
+          console.error('Error parsing saved cart data:', error);
+          localStorage.removeItem('cart');
+        }
       }
     }
     fetchProducts({ limit: 100 });

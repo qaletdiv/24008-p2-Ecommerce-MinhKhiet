@@ -50,10 +50,22 @@ const ProductDetailPage = () => {
   
           try {
             const relatedResponse = await apiService.getProducts({ category: productData.category, limit: 20 });
+            console.log('Related products response for category:', productData.category, relatedResponse);
             const related = relatedResponse.data
               ?.filter(p => p.id !== parseInt(id))
               ?.slice(0, 4) || [];
+            console.log('Filtered related products:', related);
             setRelatedProducts(related);
+            
+            if (related.length === 0) {
+              console.log('No related products found in category, fetching random products');
+              const randomResponse = await apiService.getProducts({ limit: 10 });
+              const randomProducts = randomResponse.data
+                ?.filter(p => p.id !== parseInt(id))
+                ?.slice(0, 4) || [];
+              console.log('Random products:', randomProducts);
+              setRelatedProducts(randomProducts);
+            }
           } catch (error) {
             console.error('Error loading related products:', error);
             setRelatedProducts([]);
@@ -308,9 +320,9 @@ const ProductDetailPage = () => {
           </div>
         </div>
 
-        {relatedProducts.length > 0 && (
-          <div className="related-products-section">
-            <h2>Related Products</h2>
+        <div className="related-products-section">
+          <h2>Related Products</h2>
+          {relatedProducts.length > 0 ? (
             <div className="related-products-grid">
               {relatedProducts.map(relatedProduct => (
                 <ProductCard
@@ -319,8 +331,18 @@ const ProductDetailPage = () => {
                 />
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="no-related-products">
+              <p>No related products found in this category.</p>
+              <button 
+                onClick={() => router.push('/all-products')} 
+                className="browse-all-btn"
+              >
+                Browse All Products
+              </button>
+            </div>
+          )}
+        </div>
       </main>
 
       <Footer />

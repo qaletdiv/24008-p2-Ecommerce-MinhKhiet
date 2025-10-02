@@ -100,6 +100,7 @@ export const assets = {
   product_details_page_apple_earphone_image5,
   checkmark
 };
+
 export const BagIcon = () => {
   return (
     <svg className="w-5 h-5 text-gray-800" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -202,32 +203,7 @@ export const productsDummyData = [
       `${IMAGE_BASE_URL}/images/playstation_image.png`
     ],
     "category": "Gaming",
-    "date": 1738667631343,
+    "date": 1738667471927,
     "__v": 0
   }
 ];
-
-export const addressDummyData = [
-  {
-    fullName: "John Doe",
-    area: "123 Main Street",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    country: "USA",
-    phone: "+1 555-123-4567"
-  },
-  {
-    fullName: "Jane Smith", 
-    area: "456 Oak Avenue",
-    city: "Los Angeles",
-    state: "CA",
-    zipCode: "90210",
-    country: "USA",
-    phone: "+1 555-987-6543"
-  }
-];
-
-export const getImageUrl = (filename) => {
-  return `${IMAGE_BASE_URL}/images/${filename}`;
-};

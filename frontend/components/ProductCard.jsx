@@ -6,12 +6,20 @@ import { assets } from '../assets/assets';
 
 const ProductCard = ({ product }) => {
 
-    const { currency, router, addToCart } = useAppContext()
+    const { currency, router, addToCart, user } = useAppContext()
     const [isAdding, setIsAdding] = useState(false);
     const [showNotification, setShowNotification] = useState(false);
 
     const handleAddToCart = async (e) => {
         e.stopPropagation();
+        
+        if (!user) {
+            sessionStorage.setItem('redirectAfterLogin', `/product/${product.id}`);
+            alert('Please log in to add items to your cart.');
+            router.push('/login');
+            return;
+        }
+        
         setIsAdding(true);
         
         try {
@@ -36,7 +44,6 @@ const ProductCard = ({ product }) => {
             className="product-card"
             style={{ position: 'relative' }}
         >
-            {/* Success Notification */}
             {showNotification && (
                 <div
                     style={{

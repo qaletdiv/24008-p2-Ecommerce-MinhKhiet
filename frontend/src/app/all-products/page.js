@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAppContext } from '../../../context/AppContext';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
@@ -7,6 +8,7 @@ import ProductCard from '../../../components/ProductCard';
 import Loading from '../../../components/Loading';
 
 const AllProductsPage = () => {
+  const searchParams = useSearchParams();
   const { 
     categories, 
     fetchCategories, 
@@ -25,7 +27,14 @@ const AllProductsPage = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({});
-  const [displayProducts, setDisplayProducts] = useState([]); 
+  const [displayProducts, setDisplayProducts] = useState([]);
+  
+  useEffect(() => {
+    const searchFromUrl = searchParams.get('search') || '';
+    if (searchFromUrl) {
+      setFilters(prev => ({ ...prev, search: searchFromUrl }));
+    }
+  }, [searchParams]); 
   
   const loadProducts = async () => {
     const params = {
@@ -64,11 +73,6 @@ const AllProductsPage = () => {
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    loadProducts();
   };
   useEffect(() => {
     fetchCategories();
@@ -146,23 +150,6 @@ const AllProductsPage = () => {
     fontSize: '14px'
   };
 
-  const searchFormStyle = {
-    display: 'flex',
-    gap: '10px',
-    alignItems: 'end'
-  };
-
-  const searchButtonStyle = {
-    padding: '8px 16px',
-    backgroundColor: '#ea580c',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
-    fontWeight: '500'
-  };
-
   const productsGridStyle = {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
@@ -228,22 +215,6 @@ const AllProductsPage = () => {
           )}
         
           <div style={filtersStyle}>
-            <form onSubmit={handleSearch} style={searchFormStyle}>
-              <div style={filterGroupStyle}>
-                <label style={labelStyle}>Search Products</label>
-                <input
-                  type="text"
-                  placeholder="Search by name or description..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-              <button type="submit" style={searchButtonStyle}>
-                Search
-              </button>
-            </form>
-
             <div style={filterGroupStyle}>
               <label style={labelStyle}>Category</label>
               <select
