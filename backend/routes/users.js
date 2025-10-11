@@ -1,19 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { usersData } = require('../data/users');
+const userStore = require('../data/userStore');
 const { 
   validateUser, 
   validateId, 
   validatePagination 
 } = require('../middleware/validation');
 
-let users = [...usersData];
-let nextId = Math.max(...users.map(u => u.id)) + 1;
-
 router.get('/', validatePagination, (req, res) => {
   try {
     const { role, isActive, search, page = 1, limit = 10 } = req.query;
     
+    const users = userStore.getUsers();
     let filteredUsers = [...users];
     
     if (role) {
@@ -64,7 +62,7 @@ router.get('/', validatePagination, (req, res) => {
 router.get('/:id', validateId, (req, res) => {
   try {
     const { id } = req.params;
-    const user = users.find(u => u.id === parseInt(id));
+    const user = userStore.findUserById(id);
     
     if (!user) {
       return res.status(404).json({
@@ -118,7 +116,7 @@ router.post('/register', (req, res) => {
       });
     }
 
-    const existingUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const existingUser = userStore.getUsers().find(u => u.email.toLowerCase() === email.toLowerCase());
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -128,7 +126,7 @@ router.post('/register', (req, res) => {
     }
 
     const newUser = {
-      id: nextId++,
+      id: userStore.getNextId(),
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password, 
@@ -149,10 +147,12 @@ router.post('/register', (req, res) => {
         notifications: true,
         language: 'en'
       },
+      cart: [],
       createdAt: new Date().toISOString(),
       lastLogin: null
     };
 
+    const users = userStore.getUsers();
     users.push(newUser);
 
     const { password: _, confirmPassword: __, ...safeUser } = newUser;
@@ -185,7 +185,7 @@ router.post('/', validateUser, (req, res) => {
       });
     }
 
-    const existingUser = users.find(u => u.email === email);
+    const existingUser = userStore.getUsers().find(u => u.email === email);
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -195,7 +195,7 @@ router.post('/', validateUser, (req, res) => {
     }
 
     const newUser = {
-      id: nextId++,
+      id: userStore.getNextId(),
       name,
       email,
       password, 
@@ -216,10 +216,12 @@ router.post('/', validateUser, (req, res) => {
         notifications: true,
         language: 'en'
       },
+      cart: [],
       createdAt: new Date().toISOString(),
       lastLogin: null
     };
 
+    const users = userStore.getUsers();
     users.push(newUser);
 
     const { password: _, ...safeUser } = newUser;
@@ -241,7 +243,8 @@ router.post('/', validateUser, (req, res) => {
 router.put('/:id', validateId, (req, res) => {
   try {
     const { id } = req.params;
-    const userIndex = users.findIndex(u => u.id === parseInt(id));
+    const users = userStore.getUsers();
+    const userIndex = userStore.findUserIndex(id);
     
     if (userIndex === -1) {
       return res.status(404).json({
@@ -288,7 +291,8 @@ router.put('/:id', validateId, (req, res) => {
 router.delete('/:id', validateId, (req, res) => {
   try {
     const { id } = req.params;
-    const userIndex = users.findIndex(u => u.id === parseInt(id));
+    const users = userStore.getUsers();
+    const userIndex = userStore.findUserIndex(id);
     
     if (userIndex === -1) {
       return res.status(404).json({
@@ -328,7 +332,7 @@ router.post('/login', (req, res) => {
       });
     }
 
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = userStore.getUsers().find(u => u.email === email && u.password === password);
     
     if (!user) {
       return res.status(401).json({
@@ -345,6 +349,7 @@ router.post('/login', (req, res) => {
         message: 'Your account has been disabled'
       });
     }
+    const users = userStore.getUsers();
     const userIndex = users.findIndex(u => u.id === user.id);
     users[userIndex].lastLogin = new Date().toISOString();
 
@@ -367,6 +372,7 @@ router.post('/login', (req, res) => {
 router.get('/role/:role', (req, res) => {
   try {
     const { role } = req.params;
+    const users = userStore.getUsers();
     const roleUsers = users.filter(u => u.role === role);
 
     const safeUsers = roleUsers.map(user => {

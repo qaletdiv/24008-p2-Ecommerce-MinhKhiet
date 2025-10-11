@@ -71,6 +71,13 @@ app.get('/', (req, res) => {
         'GET /api/categories/slug/:slug': 'Get category by slug',
         'GET /api/categories/parent/:parentId': 'Get child categories'
       },
+      cart: {
+        'GET /api/cart/:userId': 'Get user cart',
+        'POST /api/cart/:userId/items': 'Add item to cart',
+        'PUT /api/cart/:userId/items/:productId': 'Update cart item quantity',
+        'DELETE /api/cart/:userId/items/:productId': 'Remove item from cart',
+        'DELETE /api/cart/:userId': 'Clear cart'
+      },
       images: {
         'GET /images/:filename': 'Serve static image files (PNG, JPG, SVG, etc.)',
         'GET /assets/:filename': 'Serve static asset files (images, icons, etc.)'
@@ -92,11 +99,13 @@ const productRoutes = require('./routes/products');
 const userRoutes = require('./routes/users');
 const orderRoutes = require('./routes/orders');
 const categoryRoutes = require('./routes/categories');
+const cartRoutes = require('./routes/cart');
 
 app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/cart', cartRoutes);
 
 app.use(globalErrorHandler);
 

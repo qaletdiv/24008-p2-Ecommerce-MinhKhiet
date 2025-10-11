@@ -180,6 +180,36 @@ const apiService = {
   async getOrderStats() {
     return this.apiCall('/orders/stats/summary');
   },
+
+  async getCart(userId) {
+    return this.apiCall(`/cart/${userId}`);
+  },
+
+  async addToCart(userId, product, quantity = 1) {
+    return this.apiCall(`/cart/${userId}/items`, {
+      method: 'POST',
+      body: JSON.stringify({ product, quantity }),
+    });
+  },
+
+  async updateCartItem(userId, productId, quantity) {
+    return this.apiCall(`/cart/${userId}/items/${productId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+    });
+  },
+
+  async removeCartItem(userId, productId) {
+    return this.apiCall(`/cart/${userId}/items/${productId}`, {
+      method: 'DELETE',
+    });
+  },
+
+  async clearCart(userId) {
+    return this.apiCall(`/cart/${userId}`, {
+      method: 'DELETE',
+    });
+  },
 };
 
 export const AppContextProvider = ({ children }) => {
@@ -310,6 +340,22 @@ export const AppContextProvider = ({ children }) => {
         setUser(response.data);
         setIsSeller(response.data.role === 'seller' || response.data.role === 'admin');
         localStorage.setItem('user', JSON.stringify(response.data));
+        
+        if (response.data.id) {
+          try {
+            const cartResponse = await apiService.getCart(response.data.id);
+            if (cartResponse && cartResponse.success && cartResponse.data) {
+              setCart(cartResponse.data);
+            } else {
+              console.warn('Cart fetch returned unsuccessful response:', cartResponse);
+              setCart([]);
+            }
+          } catch (cartError) {
+            console.error('Non-critical error fetching cart after login:', cartError);
+            setCart([]);
+          }
+        }
+        
         return response;
       }
       return response;
@@ -326,57 +372,108 @@ export const AppContextProvider = ({ children }) => {
     setIsSeller(false);
     setCart([]);
     localStorage.removeItem('user');
-    localStorage.removeItem('cart');
     router.push('/');
   };
 
-  const addToCart = useCallback((product, quantity = 1) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      let newCart;
-      
-      if (existingItem) {
-        newCart = prevCart.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
-      } else {
-        newCart = [...prevCart, { ...product, quantity }];
+  const addToCart = useCallback(async (product, quantity = 1) => {
+    if (!user || !user.id) {
+      console.error('User must be logged in to add items to cart');
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    if (!product || !product.id) {
+      console.error('Invalid product data');
+      return { success: false, error: 'Invalid product' };
+    }
+
+    try {
+      const response = await apiService.addToCart(user.id, product, quantity);
+      if (response.success) {
+        setCart(response.data || []);
       }
-      
-      localStorage.setItem('cart', JSON.stringify(newCart));
-      return newCart;
-    });
-  }, []);
+      return response;
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      handleError(error, 'addToCart');
+      return { success: false, error: error.message };
+    }
+  }, [user, handleError]);
 
-  const removeFromCart = (productId) => {
-    setCart(prevCart => {
-      const newCart = prevCart.filter(item => item.id !== productId);
-      localStorage.setItem('cart', JSON.stringify(newCart));
-      return newCart;
-    });
-  };
+  const removeFromCart = useCallback(async (productId) => {
+    if (!user || !user.id) {
+      console.error('User must be logged in to remove items from cart');
+      return { success: false, error: 'User not authenticated' };
+    }
 
-  const updateCartQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
+    if (!productId) {
+      console.error('Invalid product ID');
+      return { success: false, error: 'Invalid product ID' };
+    }
+
+    try {
+      const response = await apiService.removeCartItem(user.id, productId);
+      if (response.success) {
+        setCart(response.data || []);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      handleError(error, 'removeFromCart');
+      return { success: false, error: error.message };
+    }
+  }, [user, handleError]);
+
+  const updateCartQuantity = useCallback(async (productId, quantity) => {
+    if (!user || !user.id) {
+      console.error('User must be logged in to update cart');
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    if (!productId) {
+      console.error('Invalid product ID');
+      return { success: false, error: 'Invalid product ID' };
+    }
+
+    if (quantity < 0) {
+      console.error('Invalid quantity');
+      return { success: false, error: 'Quantity must be non-negative' };
+    }
+
+    if (quantity === 0) {
+      return removeFromCart(productId);
     }
     
-    setCart(prevCart => {
-      const newCart = prevCart.map(item =>
-        item.id === productId ? { ...item, quantity } : item
-      );
-      localStorage.setItem('cart', JSON.stringify(newCart));
-      return newCart;
-    });
-  };
+    try {
+      const response = await apiService.updateCartItem(user.id, productId, quantity);
+      if (response.success) {
+        setCart(response.data || []);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error updating cart quantity:', error);
+      handleError(error, 'updateCartQuantity');
+      return { success: false, error: error.message };
+    }
+  }, [user, handleError, removeFromCart]);
 
-  const clearCart = () => {
-    setCart([]);
-    localStorage.removeItem('cart');
-  };
+  const clearCart = useCallback(async () => {
+    if (!user || !user.id) {
+      console.error('User must be logged in to clear cart');
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      const response = await apiService.clearCart(user.id);
+      if (response.success) {
+        setCart([]);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+      handleError(error, 'clearCart');
+      return { success: false, error: error.message };
+    }
+  }, [user, handleError]);
 
   const getCartCount = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
@@ -391,8 +488,8 @@ export const AppContextProvider = ({ children }) => {
     try {
       const response = await apiService.createOrder(orderData);
       if (response.success) {
-        clearCart(); 
-        await fetchOrders(); 
+        await clearCart();
+        await fetchOrders();
       }
       return response;
     } catch (error) {
@@ -431,37 +528,49 @@ export const AppContextProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      localStorage.removeItem('user');
-      localStorage.removeItem('cart'); 
-      setUser(null);
-      setIsSeller(false);
-      setCart([]);
-    } else {
-      const savedUser = localStorage.getItem('user');
-      if (savedUser) {
-        try {
-          const userData = JSON.parse(savedUser);
-          setUser(userData);
-          setIsSeller(userData.role === 'seller' || userData.role === 'admin');
-        } catch (error) {
-          console.error('Error parsing saved user data:', error);
-          localStorage.removeItem('user');
+    const initializeApp = async () => {
+      if (process.env.NODE_ENV === 'development') {
+        localStorage.removeItem('user');
+        setUser(null);
+        setIsSeller(false);
+        setCart([]);
+      } else {
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          try {
+            const userData = JSON.parse(savedUser);
+            setUser(userData);
+            setIsSeller(userData.role === 'seller' || userData.role === 'admin');
+            
+            if (userData.id) {
+              try {
+                const cartResponse = await apiService.getCart(userData.id);
+                if (cartResponse && cartResponse.success && cartResponse.data) {
+                  setCart(cartResponse.data);
+                } else {
+                  console.warn('Cart fetch returned unsuccessful response on init');
+                  setCart([]);
+                }
+              } catch (cartError) {
+                console.error('Non-critical error fetching cart on init:', cartError);
+                setCart([]);
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing saved user data:', error);
+            localStorage.removeItem('user');
+            setUser(null);
+            setIsSeller(false);
+            setCart([]);
+          }
         }
       }
       
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        try {
-          setCart(JSON.parse(savedCart));
-        } catch (error) {
-          console.error('Error parsing saved cart data:', error);
-          localStorage.removeItem('cart');
-        }
-      }
-    }
-    fetchProducts({ limit: 100 });
-    fetchCategories();
+      fetchProducts({ limit: 100 });
+      fetchCategories();
+    };
+    
+    initializeApp();
   }, [fetchProducts, fetchCategories]);
 
   const contextValue = {

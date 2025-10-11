@@ -1,6 +1,6 @@
 "use client"
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import Link from "next/link"
 import { useAppContext } from "../context/AppContext";
 import Image from "next/image";
@@ -18,25 +18,61 @@ const Navbar = () => {
     fetchProducts
   } = useAppContext();
 
+  const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearchInput = (e) => {
+  useEffect(() => {
+    const searchFromUrl = searchParams?.get('search') || '';
+    if (searchFromUrl) {
+      setSearchQuery(searchFromUrl);
+    } else {
+      setSearchQuery('');
+    }
+  }, [searchParams]);
+
+  const handleSearchInput = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
+    
+    if (query.trim().length >= 2) {
+      setIsSearching(true);
+      try {
+        const response = await fetchProducts({ 
+          search: query.trim(), 
+          limit: 5 
+        });
+        if (response && response.data) {
+          setSearchSuggestions(response.data);
+          setShowSuggestions(true);
+        }
+      } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        setSearchSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
   };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       router.push(`/all-products?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
+      setShowSuggestions(false);
     }
   };
 
   const handleProductClick = (productId) => {
     router.push(`/product/${productId}`);
     setSearchQuery('');
+    setShowSuggestions(false);
   };
 
   const handleUserMenuClick = () => {
@@ -58,6 +94,9 @@ const Navbar = () => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.navbar-user-menu-container')) {
         setShowUserMenu(false);
+      }
+      if (!event.target.closest('.navbar-search-container')) {
+        setShowSuggestions(false);
       }
     };
 
@@ -113,6 +152,58 @@ const Navbar = () => {
               <Image src={assets.search_icon} alt="search icon" className="search-icon" width={18} height={18} />
             </button>
           </form>
+          
+          {showSuggestions && searchQuery.trim().length >= 2 && (
+            <div className="search-suggestions">
+              {isSearching ? (
+                <div className="suggestion-loading">
+                  <span>Searching...</span>
+                </div>
+              ) : searchSuggestions.length > 0 ? (
+                <>
+                  {searchSuggestions.map((product) => (
+                    <div
+                      key={product.id}
+                      className="suggestion-item"
+                      onClick={() => handleProductClick(product.id)}
+                    >
+                      <img 
+                        src={product.image?.[0] || '/placeholder.png'} 
+                        alt={product.name}
+                        className="suggestion-image"
+                      />
+                      <div className="suggestion-info">
+                        <div className="suggestion-name">{product.name}</div>
+                        <div className="suggestion-price">
+                          {product.offerPrice ? (
+                            <>
+                              <span className="offer-price">${product.offerPrice}</span>
+                              <span className="original-price">${product.price}</span>
+                            </>
+                          ) : (
+                            <span>${product.price}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <div 
+                    className="suggestion-view-all"
+                    onClick={() => {
+                      router.push(`/all-products?search=${encodeURIComponent(searchQuery.trim())}`);
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    View all results for "{searchQuery}"
+                  </div>
+                </>
+              ) : (
+                <div className="suggestion-empty">
+                  No products found for "{searchQuery}"
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <button 

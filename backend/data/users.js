@@ -21,6 +21,7 @@ const usersData = [
       notifications: true,
       language: "en"
     },
+    cart: [],
     createdAt: "2024-01-01T00:00:00Z",
     lastLogin: "2024-01-25T10:30:00Z"
   },
@@ -46,6 +47,7 @@ const usersData = [
       notifications: false,
       language: "en"
     },
+    cart: [],
     createdAt: "2024-01-10T08:15:00Z",
     lastLogin: "2024-01-24T16:45:00Z"
   },
@@ -71,6 +73,7 @@ const usersData = [
       notifications: true,
       language: "en"
     },
+    cart: [],
     createdAt: "2024-01-15T12:30:00Z",
     lastLogin: "2024-01-23T14:20:00Z"
   },
@@ -102,6 +105,7 @@ const usersData = [
       taxId: "123456789",
       website: "https://proelectronics.com"
     },
+    cart: [],
     createdAt: "2024-01-05T14:00:00Z",
     lastLogin: "2024-01-25T09:15:00Z"
   }
