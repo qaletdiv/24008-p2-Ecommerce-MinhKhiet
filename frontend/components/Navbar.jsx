@@ -66,6 +66,9 @@ const Navbar = () => {
     if (searchQuery.trim()) {
       router.push(`/all-products?search=${encodeURIComponent(searchQuery.trim())}`);
       setShowSuggestions(false);
+    } else {
+      router.push('/all-products');
+      setShowSuggestions(false);
     }
   };
 
